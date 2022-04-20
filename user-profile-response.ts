@@ -2,10 +2,10 @@
 function userResponse(data: any) {
     const userObj = {
         id: data.id,
-        name: data.name,
-        email: data.email,
+        name: data.name || '',
+        email: data.email || '',
         social_token: data.social_token || '',
-        phone_number: data.phone_number
+        phone_number: data.phone_number || ''
     };
     return userObj;
 }
