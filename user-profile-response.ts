@@ -1,20 +1,43 @@
 
 function userResponse(data: any) {
-    const userObj = {
+    return {
         id: data.id,
         name: data.name || '',
         email: data.email || '',
         social_token: data.social_token || '',
         phone_number: data.phone_number || ''
     };
-    return userObj;
+}
+function subscriptionResponse(data: any) {
+    return {
+        id: data.id,
+        user_id: data.user_id[0] || '',
+        subscription_plan: data.subscription_plan || '',
+        subscription_type: data.subscription_type || '',
+        status: data.status || false,
+        created_at: data.created_at || ''
+    };
 }
 
 export function customUserResponse(message:any,code:any,data: any) {
-    const response = {
+    return {
         message: message,
         code: code,
         data: userResponse(data)
     };
-    return response;
+}
+
+export function errorResponse(message:any,code:any,data: any) {
+    return {
+        message: message,
+        code: code,
+        data: data
+    };
+}
+export function customSubscriptionResponse(message:any,code:any,data:any){
+    return {
+        message: message,
+        code: code,
+        data: subscriptionResponse(data)
+    };
 }
