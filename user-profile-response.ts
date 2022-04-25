@@ -27,7 +27,7 @@ export function customUserResponse(message:any,code:any,data: any) {
     };
 }
 
-export function errorResponse(message:any,code:any,data: any) {
+export function customResponse(message:any,code:any,data: any) {
     return {
         message: message,
         code: code,
