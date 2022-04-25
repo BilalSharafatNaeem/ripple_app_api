@@ -18,7 +18,7 @@ function subscriptionResponse(data: any) {
         subscription_plan: data.subscription_plan || '',
         subscription_type: data.subscription_type || '',
         status: data.status || false,
-        created_at: data.created_at || ''
+        created_at: data.created_at || '',
     };
 }
 

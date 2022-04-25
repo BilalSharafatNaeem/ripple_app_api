@@ -116,19 +116,21 @@ app.post('/login', async function (req, res) {
                 return res.send(customUserResponse('User login Successfully.',200,data[0].fields))
             }
         }
+        if(phone_number !==null || social_token !==null ){
+            await table.create({
+                "name":name,
+                "email": email,
+                "social_token": social_token,
+                "phone_number": phone_number
+            }, (err:any, record:any ) => {
+                if (err) {
+                    console.error(err)
+                    return res.send({error: err}).status(422);
+                }
+                return res.send(customUserResponse('User login Successfully.',200,record.fields));
+            });
+        }
 
-      await table.create({
-            "name":name,
-            "email": email,
-            "social_token": social_token,
-            "phone_number": phone_number
-        }, (err:any, record:any ) => {
-            if (err) {
-                console.error(err)
-                return res.send({error: err}).status(422);
-            }
-            return res.send(customUserResponse('User login Successfully.',200,record.fields));
-        });
 
     } catch (error) {
         return res.send({error: error});
@@ -139,7 +141,6 @@ app.post('/create_subscription',async function (req,res) {
     try{
         const base = new Airtable({apiKey:'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Subscriptions');
-        console.log('table',table);
         const user_id = req.body.user_id;
         const subscription_plan = req.body.subscription_plan;
         const subscription_type = req.body.subscription_type;
@@ -152,7 +153,6 @@ app.post('/create_subscription',async function (req,res) {
         if(!subscription_type){
             return res.status(422).send(customResponse('Subscription type is required',422,{}));
         }
-        console.log('checking data');
         table.create({
             "user_id":[user_id],
             "subscription_plan": subscription_plan,
@@ -175,10 +175,18 @@ app.post('/create_subscription',async function (req,res) {
 app.post('/check_subscription',async function (req,res) {
     try{
         const base = new Airtable({apiKey:'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
+        const usersTable = base('Users');
         const subscriptionTable = base('Subscriptions');
         const user_id = req.body.user_id;
         if(!user_id){
             return res.status(422).send(customResponse('User id is required',422,{}));
+        }
+        const userQuery = await usersTable.select({
+            filterByFormula: `id = "${user_id}"`,
+        });
+        const user = await userQuery.firstPage();
+        if(user.length === 0){
+            return res.status(422).send(customResponse('User not exist',422,{}));
         }
         const subscriptionQuery = await subscriptionTable.select({
             filterByFormula: `user_id = "${user_id}"`,
@@ -192,7 +200,6 @@ app.post('/check_subscription',async function (req,res) {
         }
 
     }catch (error) {
-        console.log('checking',error);
         return res.send({error:error});
     }
 
@@ -219,12 +226,6 @@ app.post('/update_subscription',async function (req,res) {
     const user_id = req.body.user_id;
     const subscription_type = req.body.subscription_type;
     const subscription_plan = req.body.subscription_plan;
-    if(!subscription_type){
-        return res.status(422).send(customResponse('Subscription type is required',422,{}));
-    }
-    if(!subscription_plan){
-        return res.status(422).send(customResponse('Subscription type is required',422,{}));
-    }
     if(!user_id){
         return res.status(422).send(customResponse('User id is required',422,{}));
     }
@@ -242,13 +243,15 @@ app.post('/update_subscription',async function (req,res) {
     if(subscription.length === 0){
         return res.status(422).send(customResponse('subscription not exist',422,{}));
     }
+      const alreadySubscribedType = subscription[0].fields.subscription_type;
+      const alreadySubscribedPlan = subscription[0].fields.subscription_plan;
       const record_id:any = subscription[0].id;
       subscriptionsTable.update(record_id, {
-            "subscription_type": subscription_type,
-            "subscription_plan": subscription_plan
+            "subscription_type": subscription_type ? subscription_type : alreadySubscribedType,
+            "subscription_plan": subscription_plan ? subscription_type : alreadySubscribedPlan,
         }, (err:any, record:any) => {
             if (err) {
-              console.log("checking error",err);
+                return res.send(customSubscriptionResponse('Subscription not updated successfully.', 422, {}));
             }
           return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
       });
