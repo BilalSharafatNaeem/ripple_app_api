@@ -225,7 +225,6 @@ app.post('/update_subscription',async function (req,res) {
     const subscriptionsTable = base('Subscriptions');
     const user_id = req.body.user_id;
     const subscription_type = req.body.subscription_type;
-    const subscription_plan = req.body.subscription_plan;
     if(!user_id){
         return res.status(422).send(customResponse('User id is required',422,{}));
     }
@@ -243,15 +242,14 @@ app.post('/update_subscription',async function (req,res) {
     if(subscription.length === 0){
         return res.status(422).send(customResponse('subscription not exist',422,{}));
     }
-      const alreadySubscribedType = subscription[0].fields.subscription_type;
-      const alreadySubscribedPlan = subscription[0].fields.subscription_plan;
-      const record_id:any = subscription[0].id;
-      subscriptionsTable.update(record_id, {
+    const alreadySubscribedType = subscription[0].fields.subscription_type;
+    const record_id:any = subscription[0].id;
+     const data = await subscriptionsTable.update(record_id, {
             "subscription_type": subscription_type ? subscription_type : alreadySubscribedType,
-            "subscription_plan": subscription_plan ? subscription_type : alreadySubscribedPlan,
         }, (err:any, record:any) => {
+          console.log("data of record",record);
             if (err) {
-                return res.send(customSubscriptionResponse('Subscription not updated successfully.', 422, {}));
+                console.log(err);
             }
           return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
       });
