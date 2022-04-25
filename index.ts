@@ -143,15 +143,6 @@ app.post('/create_subscription',async function (req,res) {
         const user_id = req.body.user_id;
         const subscription_plan = req.body.subscription_plan;
         const subscription_type = req.body.subscription_type;
-
-        console.log('user id',user_id,'subscription_plan',subscription_plan,'subscription_type',subscription_type);
-        let today = new Date();
-        console.log('current date time',today);
-
-        let date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-        let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-        let dateTime = date+' '+time;
-
         if(!user_id){
             return res.status(422).send(customResponse('User id is required',422,{}));
         }
@@ -184,20 +175,18 @@ app.post('/create_subscription',async function (req,res) {
 app.post('/check_subscription',async function (req,res) {
     try{
         const base = new Airtable({apiKey:'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
-        const table = base('Subscriptions');
-        console.log('table',table);
+        const subscriptionTable = base('Subscriptions');
         const user_id = req.body.user_id;
         if(!user_id){
             return res.status(422).send(customResponse('User id is required',422,{}));
         }
-        const checkUser = await table.select({
+        const subscriptionQuery = await subscriptionTable.select({
             filterByFormula: `user_id = "${user_id}"`,
         });
 
-        const user = await checkUser.firstPage();
-        console.log('user length',user.length);
-        if(user && user.length && user.length >0){
-            return res.send(customSubscriptionResponse('Subscription detail.', 200, user[0].fields));
+        const subscription = await subscriptionQuery.firstPage();
+        if(subscription && subscription.length && subscription.length >0){
+            return res.send(customSubscriptionResponse('Subscription detail.', 200, subscription[0].fields));
         }else{
             return res.send(customSubscriptionResponse('detail not found.', 200, {}));
         }
@@ -221,6 +210,48 @@ app.get('/subscribed_users_count',async function (req,res) {
     }catch (error){
         return res.send({error:error});
     }
+});
+
+app.post('/update_subscription',async function (req,res) {
+    const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
+    const usersTable = base('Users');
+    const subscriptionsTable = base('Subscriptions');
+    const user_id = req.body.user_id;
+    const subscription_type = req.body.subscription_type;
+    const subscription_plan = req.body.subscription_plan;
+    if(!subscription_type){
+        return res.status(422).send(customResponse('Subscription type is required',422,{}));
+    }
+    if(!subscription_plan){
+        return res.status(422).send(customResponse('Subscription type is required',422,{}));
+    }
+    if(!user_id){
+        return res.status(422).send(customResponse('User id is required',422,{}));
+    }
+    const userQuery = await usersTable.select({
+        filterByFormula: `id = "${user_id}"`,
+    });
+    const user = await userQuery.firstPage();
+    if(user.length === 0){
+        return res.status(422).send(customResponse('User not exist',422,{}));
+    }
+    const subscriptionQuery = await subscriptionsTable.select({
+        filterByFormula: `user_id = "${user_id}"`,
+    });
+    const subscription:any = await subscriptionQuery.firstPage();
+    if(subscription.length === 0){
+        return res.status(422).send(customResponse('subscription not exist',422,{}));
+    }
+      const record_id:any = subscription[0].id;
+      subscriptionsTable.update(record_id, {
+            "subscription_type": subscription_type,
+            "subscription_plan": subscription_plan
+        }, (err:any, record:any) => {
+            if (err) {
+              console.log("checking error",err);
+            }
+          return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
+      });
 });
 
 const port = app.get('port');

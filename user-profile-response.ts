@@ -1,3 +1,4 @@
+import Airtable from "airtable";
 
 function userResponse(data: any) {
     return {
@@ -9,9 +10,11 @@ function userResponse(data: any) {
     };
 }
 function subscriptionResponse(data: any) {
+    const userId = data['id (from user_id)'];
     return {
         id: data.id,
         user_id: data.user_id[0] || '',
+        user: userId[0],
         subscription_plan: data.subscription_plan || '',
         subscription_type: data.subscription_type || '',
         status: data.status || false,
