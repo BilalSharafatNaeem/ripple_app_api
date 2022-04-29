@@ -135,6 +135,7 @@ app.post('/login', async function (req, res) {
         const name = req.body.name;
         const email = req.body.email;
         const social_token = req.body.social_token;
+        const password = req.body.password;
         const phone_number = req.body.phone_number;
         if (phone_number) {
             const checkNumber = await table.select({
@@ -142,7 +143,13 @@ app.post('/login', async function (req, res) {
             });
             const user = await checkNumber.firstPage();
             if (user && user.length && user.length > 0) {
-                return res.send(customUserResponse('User login Successfully.', 200, user[0].fields))
+                console.log('old',user[0].fields.password,'new password',password)
+                if(user[0].fields.password === password){
+                    console.log('old',user[0].fields.password,'new',password);
+                    return res.send(customUserResponse('User login Successfully.', 200, user[0].fields))
+                }else{
+                    return res.status(422).send(customResponse('Invalid credentials', 422, {}));
+                }
             }
         }
         if (social_token) {
@@ -154,7 +161,7 @@ app.post('/login', async function (req, res) {
                 return res.send(customUserResponse('User login Successfully.', 200, data[0].fields))
             }
         }
-        if (phone_number !== null || social_token !== null) {
+        if (social_token !== null) {
             await table.create({
                 "name": name,
                 "email": email,
