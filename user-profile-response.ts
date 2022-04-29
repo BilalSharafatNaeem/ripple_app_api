@@ -1,4 +1,3 @@
-import Airtable from "airtable";
 
 function userResponse(data: any) {
     return {
