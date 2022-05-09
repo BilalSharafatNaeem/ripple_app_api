@@ -128,6 +128,7 @@ app.post('/sign_up', async function (req, res) {
     }
 });
 
+
 app.post('/login', async function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
@@ -137,19 +138,25 @@ app.post('/login', async function (req, res) {
         const social_token = req.body.social_token;
         const password = req.body.password;
         const phone_number = req.body.phone_number;
-        if (phone_number) {
+        console.log("phone_number",phone_number,'social_token',social_token,'password',password);
+        if (phone_number && password) {
             const checkNumber = await table.select({
-                filterByFormula: `phone_number = "${phone_number}"`
+                // filterByFormula: `phone_number = "${phone_number}"`
+                filterByFormula: `AND(phone_number = '${phone_number}', password = '${password}')`
             });
             const user = await checkNumber.firstPage();
+            console.log('user',user[0]);
             if (user && user.length && user.length > 0) {
-                console.log('old',user[0].fields.password,'new password',password)
+                console.log("checking data",user[0].fields);
+                console.log('old',user[0].fields,'new password',password);
                 if(user[0].fields.password === password){
                     console.log('old',user[0].fields.password,'new',password);
                     return res.send(customUserResponse('User login Successfully.', 200, user[0].fields))
                 }else{
                     return res.status(422).send(customResponse('Invalid credentials', 422, {}));
                 }
+            }else{
+                return res.status(422).send(customResponse('User not exist with these credentials', 422, {}));
             }
         }
         if (social_token) {
@@ -159,21 +166,21 @@ app.post('/login', async function (req, res) {
             const data = await userData.firstPage();
             if (data && data.length && data.length > 0) {
                 return res.send(customUserResponse('User login Successfully.', 200, data[0].fields))
+            }else {
+                await table.create({
+                    "name": name,
+                    "email": email,
+                    "social_token": social_token,
+                    "phone_number": phone_number
+                }, (err: any, record: any) => {
+                    if (err) {
+                        console.error(err)
+                        return res.send({error: err}).status(422);
+                    }
+                    return res.send(customUserResponse('User login Successfully.', 200, record.fields));
+                });
             }
-        }
-        if (social_token !== null) {
-            await table.create({
-                "name": name,
-                "email": email,
-                "social_token": social_token,
-                "phone_number": phone_number
-            }, (err: any, record: any) => {
-                if (err) {
-                    console.error(err)
-                    return res.send({error: err}).status(422);
-                }
-                return res.send(customUserResponse('User login Successfully.', 200, record.fields));
-            });
+
         }
 
 
