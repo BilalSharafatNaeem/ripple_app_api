@@ -16,6 +16,7 @@ function subscriptionResponse(data: any) {
         user: userId[0],
         subscription_plan: data.subscription_plan || '',
         subscription_type: data.subscription_type || '',
+        purchase_id: data.purchase_id || '',
         status: data.status || false,
         created_at: data.created_at || '',
     };

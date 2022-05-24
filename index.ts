@@ -152,7 +152,6 @@ app.post('/login', async function (req, res) {
                 // filterByFormula: `AND(phone_number = '${phone_number}', password = '${password}')`
             });
             const user = await checkNumber.firstPage();
-            console.log('user',user[0]);
             if (user && user.length && user.length > 0) {
                 const checkPassword = await bcrypt.compareSync(
                     password,
@@ -239,6 +238,7 @@ app.post('/create_subscription', async function (req, res) {
         const user_id = req.body.user_id;
         const subscription_plan = req.body.subscription_plan;
         const subscription_type = req.body.subscription_type;
+        const purchase_id = req.body.purchase_id;
         if (!user_id) {
             return res.status(422).send(customResponse('User id is required', 422, {}));
         }
@@ -248,10 +248,14 @@ app.post('/create_subscription', async function (req, res) {
         if (!subscription_type) {
             return res.status(422).send(customResponse('Subscription type is required', 422, {}));
         }
+        if (!purchase_id) {
+            return res.status(422).send(customResponse('purchase id is required', 422, {}));
+        }
         table.create({
             "user_id": [user_id],
             "subscription_plan": subscription_plan,
             "subscription_type": subscription_type,
+            "purchase_id": purchase_id,
             "status": true
         }, (err: any, record: any) => {
             if (err) {
