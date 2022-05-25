@@ -68,6 +68,8 @@ app.get('/delete_users', function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Users');
+        // const table = base('Subscriptions');
+
 
         table
             .select()
@@ -251,20 +253,29 @@ app.post('/create_subscription', async function (req, res) {
         if (!purchase_id) {
             return res.status(422).send(customResponse('purchase id is required', 422, {}));
         }
-        table.create({
-            "user_id": [user_id],
-            "subscription_plan": subscription_plan,
-            "subscription_type": subscription_type,
-            "purchase_id": purchase_id,
-            "status": true
-        }, (err: any, record: any) => {
-            if (err) {
-                console.error('checking', err);
-                return res.send({error: err}).status(422);
-            }
-            console.log('checking record', record);
-            return res.send(customSubscriptionResponse('Subscription created Successfully.', 200, record.fields));
-        });
+            const detail = await table.select({
+                filterByFormula: `purchase_id = "${purchase_id}"`
+            });
+            const data = await detail.firstPage();
+        if (data && data.length && data.length > 0) {
+            return res.status(422).send(customResponse('Purchase id is already exist.', 422, {}));
+        }else{
+            table.create({
+                "user_id": [user_id],
+                "subscription_plan": subscription_plan,
+                "subscription_type": subscription_type,
+                "purchase_id": purchase_id,
+                "status": true
+            }, (err: any, record: any) => {
+                if (err) {
+                    console.error('checking', err);
+                    return res.send({error: err}).status(422);
+                }
+                console.log('checking record', record);
+                return res.send(customSubscriptionResponse('Subscription created Successfully.', 200, record.fields));
+            });
+        }
+
     } catch (error) {
         console.log('checking', error);
         return res.send({error: error});
@@ -277,6 +288,7 @@ app.post('/check_subscription', async function (req, res) {
         const usersTable = base('Users');
         const subscriptionTable = base('Subscriptions');
         const user_id = req.body.user_id;
+        console.log("testing",user_id);
         if (!user_id) {
             return res.status(422).send(customResponse('User id is required', 422, {}));
         }
@@ -284,21 +296,23 @@ app.post('/check_subscription', async function (req, res) {
             filterByFormula: `id = "${user_id}"`,
         });
         const user = await userQuery.firstPage();
+        console.log("user detail",user[0]);
         if (user.length === 0) {
             return res.status(422).send(customResponse('User not exist', 422, {}));
         }
         const subscriptionQuery = await subscriptionTable.select({
             filterByFormula: `user_id = "${user_id}"`,
         });
-
-        const subscription = await subscriptionQuery.firstPage();
-        if (subscription && subscription.length && subscription.length > 0) {
+        const subscription = await subscriptionQuery.all();
+        console.log("check subscription",subscription.length);
+        if(subscription && subscription.length && subscription.length > 0) {
             return res.send(customSubscriptionResponse('Subscription detail.', 200, subscription[0].fields));
         } else {
-            return res.send(customSubscriptionResponse('detail not found.', 200, {}));
+            return res.send(customResponse('detail not found.', 422, {}));
         }
 
     } catch (error) {
+        // console.log("testing121232");
         return res.send({error: error});
     }
 
