@@ -337,7 +337,7 @@ app.post('/update_subscription', async function (req, res) {
     const usersTable = base('Users');
     const subscriptionsTable = base('Subscriptions');
     const user_id = req.body.user_id;
-    const subscription_type = req.body.subscription_type;
+    // const subscription_type = req.body.subscription_type;
     if (!user_id) {
         return res.status(422).send(customResponse('User id is required', 422, {}));
     }
@@ -355,17 +355,28 @@ app.post('/update_subscription', async function (req, res) {
     if (subscription.length === 0) {
         return res.status(422).send(customResponse('subscription not exist', 422, {}));
     }
-    const alreadySubscribedType = subscription[0].fields.subscription_type;
+    console.log("test",subscription[0].fields.id);
+    // const alreadySubscribedType = subscription[0].fields.subscription_type;
     const record_id: any = subscription[0].id;
-    const data = await subscriptionsTable.update(record_id, {
-        "subscription_type": subscription_type ? subscription_type : alreadySubscribedType,
-    }, (err: any, record: any) => {
-        console.log("data of record", record);
-        if (err) {
-            console.log(err);
+    console.log("record_id",record_id);
+
+    await subscriptionsTable.destroy(record_id,function (error,deleteRecord) {
+        if(error){
+            console.log('error',error);
         }
-        return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
+        return res.send(customResponse('Subscription deleted successfully', 200, {}));
     });
+
+    // const data = await subscriptionsTable.update(record_id, {
+    //     "subscription_type": subscription_type ? subscription_type : alreadySubscribedType,
+    //     "purchase_id": "",
+    // }, (err: any, record: any) => {
+    //     console.log("data of record", record);
+    //     if (err) {
+    //         console.log(err);
+    //     }
+    //     return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
+    // });
 });
 
 const port = app.get('port');
