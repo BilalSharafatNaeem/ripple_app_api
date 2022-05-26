@@ -1,11 +1,13 @@
 
 function userResponse(data: any) {
+    var record = data.fields;
     return {
-        id: data.id,
-        name: data.name || '',
-        email: data.email || '',
-        social_token: data.social_token || '',
-        phone_number: data.phone_number || ''
+        id: record.id,
+        user_id: data.id,
+        name: record.name || '',
+        email: record.email || '',
+        social_token: record.social_token || '',
+        phone_number: record.phone_number || ''
     };
 }
 function subscriptionResponse(data: any) {

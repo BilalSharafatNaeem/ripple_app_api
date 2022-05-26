@@ -129,8 +129,8 @@ app.post('/sign_up', async function (req, res) {
                 console.error(err)
                 return res.send({error: err}).status(422);
             }
-            console.log("data",record.fields);
-            return res.send(customUserResponse('User register Successfully.', 200, record.fields));
+            console.log("data",record.id);
+            return res.send(customUserResponse('User register Successfully.', 200, record));
         });
     } catch (error) {
         return res.send({error: error});
@@ -160,7 +160,7 @@ app.post('/login', async function (req, res) {
                     user[0].fields.password
                 );
                 if(checkPassword === true){
-                    return res.send(customUserResponse('User login Successfully.', 200, user[0].fields))
+                    return res.send(customUserResponse('User login Successfully.', 200, user[0]))
                 }else {
                     return res.status(422).send(customResponse('Invalid credentials', 422, {}));
                 }
@@ -174,7 +174,7 @@ app.post('/login', async function (req, res) {
             });
             const data = await userData.firstPage();
             if (data && data.length && data.length > 0) {
-                return res.send(customUserResponse('User login Successfully.', 200, data[0].fields))
+                return res.send(customUserResponse('User login Successfully.', 200, data[0]))
             }else {
                 await table.create({
                     "name": name,
@@ -186,7 +186,7 @@ app.post('/login', async function (req, res) {
                         console.error(err)
                         return res.send({error: err}).status(422);
                     }
-                    return res.send(customUserResponse('User login Successfully.', 200, record.fields));
+                    return res.send(customUserResponse('User login Successfully.', 200, record));
                 });
             }
 
