@@ -238,7 +238,7 @@ app.post('/create_subscription', async function (req, res) {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Subscriptions');
         const user_id = req.body.user_id;
-        const userId = req.body.user;
+        const userId = req.body.id;
         const subscription_plan = req.body.subscription_plan;
         const subscription_type = req.body.subscription_type;
         const purchase_id = req.body.purchase_id;
@@ -263,7 +263,7 @@ app.post('/create_subscription', async function (req, res) {
         const detail = await table.select({
                 filterByFormula: filterByFormula
             });
-            const data = await detail.firstPage();
+            const data = await detail.all();
         if (data && data.length && data.length > 0) {
             return res.status(422).send(customResponse('Purchase id is already exist.', 422, {}));
         }
@@ -271,7 +271,7 @@ app.post('/create_subscription', async function (req, res) {
         const checkPurchaseId = await table.select({
             filterByFormula: `purchase_id = "${purchase_id}"`
         });
-        const purchase = await checkPurchaseId.firstPage();
+        const purchase = await checkPurchaseId.all();
 
         if (purchase && purchase.length && purchase.length > 0) {
             const record_id:any = purchase[0].id;
@@ -321,7 +321,7 @@ app.post('/check_subscription', async function (req, res) {
         const userQuery = await usersTable.select({
             filterByFormula: `id = "${user_id}"`,
         });
-        const user = await userQuery.firstPage();
+        const user = await userQuery.all();
         console.log("user detail",user[0]);
         if (user.length === 0) {
             return res.status(422).send(customResponse('User not exist', 422, {}));
@@ -370,14 +370,14 @@ app.post('/update_subscription', async function (req, res) {
     const userQuery = await usersTable.select({
         filterByFormula: `id = "${user_id}"`,
     });
-    const user = await userQuery.firstPage();
+    const user = await userQuery.all();
     if (user.length === 0) {
         return res.status(422).send(customResponse('User not exist', 422, {}));
     }
     const subscriptionQuery = await subscriptionsTable.select({
         filterByFormula: `user_id = "${user_id}"`,
     });
-    const subscription: any = await subscriptionQuery.firstPage();
+    const subscription: any = await subscriptionQuery.all();
     if (subscription.length === 0) {
         return res.status(422).send(customResponse('subscription not exist', 422, {}));
     }
