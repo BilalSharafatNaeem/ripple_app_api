@@ -238,6 +238,7 @@ app.post('/create_subscription', async function (req, res) {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Subscriptions');
         const user_id = req.body.user_id;
+        const userId = req.body.user;
         const subscription_plan = req.body.subscription_plan;
         const subscription_type = req.body.subscription_type;
         const purchase_id = req.body.purchase_id;
@@ -247,18 +248,43 @@ app.post('/create_subscription', async function (req, res) {
         if (!subscription_plan) {
             return res.status(422).send(customResponse('Subscription plan is required', 422, {}));
         }
+        if (!userId) {
+            return res.status(422).send(customResponse('user is required', 422, {}));
+        }
         if (!subscription_type) {
             return res.status(422).send(customResponse('Subscription type is required', 422, {}));
         }
         if (!purchase_id) {
             return res.status(422).send(customResponse('purchase id is required', 422, {}));
         }
-            const detail = await table.select({
-                filterByFormula: `purchase_id = "${purchase_id}"`
+        var filterByFormula = "AND({purchase_id}='" + purchase_id + "', {user_id} !='" + userId + "')";
+        console.log("ddsdfd",filterByFormula);
+
+        const detail = await table.select({
+                filterByFormula: filterByFormula
             });
             const data = await detail.firstPage();
         if (data && data.length && data.length > 0) {
             return res.status(422).send(customResponse('Purchase id is already exist.', 422, {}));
+        }
+
+        const checkPurchaseId = await table.select({
+            filterByFormula: `purchase_id = "${purchase_id}"`
+        });
+        const purchase = await checkPurchaseId.firstPage();
+
+        if (purchase && purchase.length && purchase.length > 0) {
+            const record_id:any = purchase[0].id;
+            const data1 = await table.update(record_id, {
+                "subscription_plan": subscription_plan,
+            }, (err: any, record: any) => {
+                console.log("data of record", record);
+                if (err) {
+                    console.log(err);
+                }
+                return res.send(customSubscriptionResponse('Subscription updated successfully.', 200, record.fields));
+            });
+
         }else{
             table.create({
                 "user_id": [user_id],
