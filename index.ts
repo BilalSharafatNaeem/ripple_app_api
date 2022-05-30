@@ -257,17 +257,33 @@ app.post('/create_subscription', async function (req, res) {
         if (!purchase_id) {
             return res.status(422).send(customResponse('purchase id is required', 422, {}));
         }
-        var filterByFormula = "AND({purchase_id}='" + purchase_id + "', {user_id} !='" + userId + "')";
+        var filterByFormula = "AND({purchase_id}='" + purchase_id + "',{user_id} !='" + userId + "')";
         console.log("ddsdfd",filterByFormula);
-
         const detail = await table.select({
                 filterByFormula: filterByFormula
             });
             const data = await detail.all();
+            console.log("testing data",data);
         if (data && data.length && data.length > 0) {
-            return res.status(422).send(customResponse('Purchase id is already exist.', 422, {}));
+            if(data[0].fields.subscription_plan === subscription_plan){
+                return res.status(422).send(customResponse('Purchase id is already exist.', 422, {}));
+            }else{
+                table.create({
+                    "user_id": [user_id],
+                    "subscription_plan": subscription_plan,
+                    "subscription_type": subscription_type,
+                    "purchase_id": purchase_id,
+                    "status": true
+                }, (err: any, record: any) => {
+                    if (err) {
+                        console.error('checking', err);
+                        return res.send({error: err}).status(422);
+                    }
+                    console.log('checking record1223', record);
+                    return res.send(customSubscriptionResponse('Subscription created Successfully.', 200, record.fields));
+                });
+            }
         }
-
         const checkPurchaseId = await table.select({
             filterByFormula: `purchase_id = "${purchase_id}"`
         });
