@@ -97,32 +97,27 @@ app.post('/sign_up', async function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Users');
-        const name = req.body.name;
-        const phone_number = req.body.phone_number;
+        const email = req.body.email;
         const password = req.body.password;
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt);
 
         console.log('check hash',hashed);
-        if (!name) {
-            return res.status(422).send(customResponse('name is required', 422, {}));
-        }
         if (!password) {
             return res.status(422).send(customResponse('password is required', 422, {}));
         }
-        if (!phone_number) {
-            return res.status(422).send(customResponse('Phone number is required', 422, {}));
+        if (!email) {
+            return res.status(422).send(customResponse('Email is required', 422, {}));
         }
-        const checkPhoneNumber = await table.select({
-            filterByFormula: `phone_number = "${phone_number}"`
+        const checkEmail = await table.select({
+            filterByFormula: `email = "${email}"`
         });
-        const users = await checkPhoneNumber.firstPage();
+        const users = await checkEmail.firstPage();
         if (users && users.length && users.length > 0) {
-            return res.status(422).send(customResponse('User already exist with this phone number.', 422, {}));
+            return res.status(422).send(customResponse('User already exist with this email.', 422, {}));
         }
         table.create({
-            "name": name,
-            "phone_number": phone_number,
+            "email": email,
             "password": hashed
         }, (err: any, record: any) => {
             if (err) {
@@ -142,18 +137,15 @@ app.post('/login', async function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const table = base('Users');
-        const name = req.body.name;
         const email = req.body.email;
         const social_token = req.body.social_token;
         const password = req.body.password;
-        const phone_number = req.body.phone_number;
 
-        if (phone_number && password) {
-            const checkNumber = await table.select({
-                filterByFormula: `phone_number = "${phone_number}"`
-                // filterByFormula: `AND(phone_number = '${phone_number}', password = '${password}')`
+        if (email && password) {
+            const checkEmail = await table.select({
+                filterByFormula: `email = "${email}"`
             });
-            const user = await checkNumber.firstPage();
+            const user = await checkEmail.firstPage();
             if (user && user.length && user.length > 0) {
                 const checkPassword = await bcrypt.compareSync(
                     password,
@@ -177,10 +169,8 @@ app.post('/login', async function (req, res) {
                 return res.send(customUserResponse('User login Successfully.', 200, data[0]))
             }else {
                 await table.create({
-                    "name": name,
                     "email": email,
                     "social_token": social_token,
-                    "phone_number": phone_number
                 }, (err: any, record: any) => {
                     if (err) {
                         console.error(err)
@@ -202,25 +192,27 @@ app.post('/reset_password', async function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
         const UserTable = base('Users');
-        const phone_number = req.body.phone_number;
+        const email = req.body.email;
         const password = req.body.password;
-        if (!phone_number) {
-            return res.status(422).send(customResponse('Phone number is required', 422, {}));
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(password, salt);
+        if (!email) {
+            return res.status(422).send(customResponse('Email is required', 422, {}));
         }
         if (!password) {
             return res.status(422).send(customResponse('Password is required', 422, {}));
         }
-        const checkNumber = await UserTable.select({
-            filterByFormula: `phone_number = "${phone_number}"`
+        const checkEmail = await UserTable.select({
+            filterByFormula: `email = "${email}"`
         });
-        const userDataRecord = await checkNumber.firstPage();
+        const userDataRecord = await checkEmail.firstPage();
         if (userDataRecord.length === 0) {
             return res.status(422).send(customResponse('User not exist', 422, {}));
         }
         const userRecord:any= userDataRecord[0].id;
         console.log("user id",userRecord);
         await UserTable.update(userRecord, {
-            "password": password,
+            "password": hashed,
         }, (err: any, record: any) => {
             console.log("data of record", record);
             if (err) {
@@ -262,6 +254,7 @@ app.post('/create_subscription', async function (req, res) {
         const detail = await table.select({
                 filterByFormula: filterByFormula
             });
+        console.log("testing filterByFormula",filterByFormula);
             const data = await detail.all();
             console.log("testing data",data);
         if (data && data.length && data.length > 0) {

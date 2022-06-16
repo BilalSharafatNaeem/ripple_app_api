@@ -4,10 +4,8 @@ function userResponse(data: any) {
     return {
         id: record.id,
         user_id: data.id,
-        name: record.name || '',
         email: record.email || '',
         social_token: record.social_token || '',
-        phone_number: record.phone_number || ''
     };
 }
 function subscriptionResponse(data: any) {
