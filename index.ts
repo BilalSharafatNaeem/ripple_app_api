@@ -93,6 +93,29 @@ app.get('/delete_users', function (req, res) {
     }
 });
 
+app.post('/destroy_user', function (req, res) {
+    try {
+        const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
+        const table = base('Users');
+        const userId = req.body.user_id;
+        if (!userId) {
+            return res.status(422).send(customResponse('User id is required', 422, {}));
+        }
+        table.destroy(userId, (err, record) => {
+            if (err) {
+                console.error(err)
+                return res.send({error: err}).status(422);
+            } else {
+                return res.send(customUserResponse('User Deleted Successfully.', 200, {}));
+            }
+        });
+
+    } catch (error) {
+        return res.send({error: error});
+    }
+});
+
+
 app.post('/sign_up', async function (req, res) {
     try {
         const base = new Airtable({apiKey: 'keyeiyOap6PKa91Je'}).base('appoeC1QdH0yXEMyC');
